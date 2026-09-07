@@ -3,6 +3,9 @@
 module.exports = {
   content: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}'],
   presets: [require('nativewind/preset')],
+  // MVP é tema claro fixo (TemaContext.tsx) — 'class' evita que o NativeWind
+  // tente setar color-scheme automaticamente via media query no web.
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -25,6 +28,10 @@ module.exports = {
         textOnDarkIdle: '#B8B8B8',
 
         success: '#2F8F5E',
+        successBg: '#EAF5EF',
+        warning: '#B67A1A', // revisões atrasadas / avisos — do handoff do Designer (Resumo.dc.html)
+        warningBg: '#FBF3E3',
+        neutralBg: '#F1F1F1',
       },
       borderRadius: {
         sm: '8px',
@@ -34,8 +41,12 @@ module.exports = {
         pill: '999px',
       },
       fontFamily: {
-        display: ['SpaceGrotesk'],
-        body: ['Inter'],
+        // Nomes exatos registrados por @expo-google-fonts/* em app/_layout.tsx —
+        // RN não sintetiza peso a partir de um único arquivo de fonte, então
+        // cada peso usado no design precisa da própria entrada aqui.
+        display: ['SpaceGrotesk_700Bold'],
+        body: ['Inter_400Regular'],
+        'body-semibold': ['Inter_600SemiBold'],
       },
     },
   },

@@ -42,3 +42,30 @@ export function chaveSemanaISO(dataCivil: string): string {
   const semana = String(getISOWeek(data)).padStart(2, '0');
   return `${ano}-W${semana}`;
 }
+
+/** Dia da semana (0=dom...6=sáb) de uma data civil — casa com Bloco.diaSemana. */
+export function diaSemanaDe(dataCivil: string): number {
+  return toZonedTime(`${dataCivil}T12:00:00`, FUSO).getDay();
+}
+
+const NOMES_DIA = [
+  'Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
+  'Quinta-feira', 'Sexta-feira', 'Sábado',
+];
+const NOMES_MES = [
+  'jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez',
+];
+
+/** "Segunda-feira" + "6 de set" para o cabeçalho da grade (Grade Semanal / Modo Foco). */
+export function formatarDiaLongo(dataCivil: string): { nomeDia: string; dataCurta: string } {
+  const data = toZonedTime(`${dataCivil}T12:00:00`, FUSO);
+  return {
+    nomeDia: NOMES_DIA[data.getDay()],
+    dataCurta: `${data.getDate()} de ${NOMES_MES[data.getMonth()]}`,
+  };
+}
+
+/** Hora atual no fuso SP, formato 'HH:mm' — usado pra achar o bloco "AGORA". */
+export function horaAtualHHmm(): string {
+  return formatInTimeZone(new Date(), FUSO, 'HH:mm');
+}
