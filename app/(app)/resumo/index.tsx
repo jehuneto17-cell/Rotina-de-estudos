@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { useAuth } from '../../../hooks/useAuth';
 import { useDados } from '../../../hooks/useDados';
 import { useProgresso } from '../../../hooks/useProgresso';
 import { useRegistrosDiario } from '../../../hooks/useRegistrosDiario';
-import { diaSemanaDe, hojeCivil, somarDias } from '../../../lib/datas';
+import { diaSemanaDe, diferencaEmDias, hojeCivil, somarDias } from '../../../lib/datas';
 import { progressoDaMeta } from '../../../lib/metas';
 import { MetricCard } from '../../../components/resumo/MetricCard';
 import { BarraMeta } from '../../../components/resumo/BarraMeta';
 import { GraficoEvolucao, type DiaEvolucao } from '../../../components/resumo/GraficoEvolucao';
 import { Card } from '../../../components/ui/Card';
 import { EstadoVazio } from '../../../components/ui/EstadoVazioErro';
+import { MateriaIcon } from '../../../components/ui/MateriaIcon';
 
 const LETRA_DIA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']; // getDay(): 0=dom
 
@@ -55,6 +57,18 @@ export default function Resumo() {
     [materias, progresso, registros, mesCorrente]
   );
 
+  const diasSemEstudar = progresso?.ultimoDiaEstudado ? diferencaEmDias(progresso.ultimoDiaEstudado, hoje) : null;
+  const avisoInatividade =
+    diasSemEstudar === null
+      ? 'Você ainda não registrou nenhum estudo.'
+      : diasSemEstudar === 0
+        ? null
+        : diasSemEstudar === 1
+          ? 'Você não estuda desde ontem.'
+          : `Você ficou ${diasSemEstudar} dias sem estudar!`;
+
+  const sessoesRecentes = registros.slice(0, 5); // já vem ordenado por data desc (useRegistrosDiario)
+
   if (carregandoInicial) {
     return (
       <View className="flex-1 bg-bg items-center justify-center">
@@ -74,6 +88,21 @@ export default function Resumo() {
   return (
     <ScrollView className="flex-1 bg-bg" contentContainerClassName="px-6 pt-7 pb-8 gap-7">
       <Text className="font-display font-bold text-2xl text-text">Resumo</Text>
+
+      {avisoInatividade && (progresso?.streak ?? 0) === 0 && (
+        <View className="bg-warningBg border border-warning/30 rounded-card px-4 py-3.5 flex-row items-center justify-between gap-3 flex-wrap">
+          <View className="flex-1 min-w-[160px]">
+            <Text className="text-[13px] font-bold text-warning">⚠️ {avisoInatividade}</Text>
+            <Text className="text-xs text-textMuted mt-0.5">Que tal 30 minutos agora?</Text>
+          </View>
+          <Pressable
+            onPress={() => router.push('/(app)/diario/novo')}
+            className="h-9 px-4 rounded-md bg-primary items-center justify-center"
+          >
+            <Text className="text-white text-[13px] font-semibold">Estudar agora</Text>
+          </Pressable>
+        </View>
+      )}
 
       <View className="flex-row flex-wrap gap-2.5">
         <MetricCard label="Sequência de dias" value={String(progresso?.streak ?? 0)} color="text-primary" />
@@ -126,6 +155,31 @@ export default function Resumo() {
           ))}
         </Card>
       </View>
+
+      {sessoesRecentes.length > 0 && (
+        <View className="gap-3">
+          <Text className="text-base font-bold text-text">Sessões recentes</Text>
+          <Card className="p-0 overflow-hidden">
+            {sessoesRecentes.map((r, i) => {
+              const materia = materias.find((m) => m.id === r.materiaId);
+              return (
+                <Pressable
+                  key={r.id}
+                  onPress={() => router.push(`/(app)/diario/${r.id}`)}
+                  className={`flex-row items-center gap-3 px-3.5 py-3 ${i > 0 ? 'border-t border-rowBorder' : ''}`}
+                >
+                  <MateriaIcon emoji={materia?.emoji ?? '📚'} cor={materia?.cor ?? '#9A9A9A'} />
+                  <View className="flex-1 min-w-0">
+                    <Text className="text-sm font-semibold text-text" numberOfLines={1}>{r.conteudo}</Text>
+                    <Text className="text-xs text-textFaint" numberOfLines={1}>{materia?.nome ?? 'Sem matéria'} · {r.data}</Text>
+                  </View>
+                  <Text className="text-[13px] text-textMuted">{r.duracaoMin}min</Text>
+                </Pressable>
+              );
+            })}
+          </Card>
+        </View>
+      )}
     </ScrollView>
   );
 }
