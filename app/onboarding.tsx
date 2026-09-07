@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
@@ -102,7 +103,7 @@ export default function Onboarding() {
                 onPress={() => remover(m.id)}
                 className="w-7 h-7 rounded-full bg-neutralBg items-center justify-center"
               >
-                <Text className="text-textMuted text-sm">✕</Text>
+                <X size={16} color="#141414" />
               </Pressable>
             </View>
           ))}

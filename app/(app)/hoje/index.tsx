@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react-native';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -75,7 +76,7 @@ export default function Hoje() {
           onPress={() => setDayOffset((o) => o - 1)}
           className="w-9 h-9 rounded-full border border-border bg-surface items-center justify-center"
         >
-          <Text className="text-text text-base">‹</Text>
+          <ChevronLeft size={18} color="#141414" />
         </Pressable>
         <View className="items-center">
           <Text className="font-display font-bold text-[19px] text-text">{nomeDia}</Text>
@@ -85,7 +86,7 @@ export default function Hoje() {
           onPress={() => setDayOffset((o) => o + 1)}
           className="w-9 h-9 rounded-full border border-border bg-surface items-center justify-center"
         >
-          <Text className="text-text text-base">›</Text>
+          <ChevronRight size={16} color="#141414" />
         </Pressable>
       </View>
 
@@ -168,15 +169,12 @@ export default function Hoje() {
         )}
       </ScrollView>
 
-      {/* ponytail: Pomodoro ainda não foi convertido (fica em outro handoff) — botão inerte por ora. */}
-      <Pressable className="absolute right-6 bottom-[88px] w-12 h-12 rounded-full bg-surface items-center justify-center shadow-md">
-        <Text className="text-lg">⏱</Text>
-      </Pressable>
+      {/* O widget do Pomodoro é global (montado em (app)/_layout.tsx) — só o botão de novo bloco fica aqui. */}
       <Pressable
         onPress={() => router.push(`/(app)/hoje/bloco/novo?dia=${data}`)}
-        className="absolute right-6 bottom-7 w-14 h-14 rounded-full bg-primary items-center justify-center shadow-lg"
+        className="absolute right-6 bottom-24 w-14 h-14 rounded-full bg-primary items-center justify-center shadow-lg"
       >
-        <Text className="text-white text-2xl leading-none">+</Text>
+        <Plus size={26} color="#FFFFFF" />
       </Pressable>
     </View>
   );

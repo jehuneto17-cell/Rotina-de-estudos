@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X } from 'lucide-react-native';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
@@ -155,7 +156,7 @@ function ListaTarefas() {
                 {t.titulo}
               </Text>
               <Pressable onPress={() => remover(t.id)} className="w-7 h-7 items-center justify-center">
-                <Text className="text-textFaint text-sm">✕</Text>
+                <X size={16} color="#141414" />
               </Pressable>
             </View>
           ))}

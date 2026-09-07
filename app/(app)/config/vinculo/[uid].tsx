@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useProgresso } from '../../../../hooks/useProgresso';
 
@@ -19,7 +20,7 @@ export default function ProgressoVinculo() {
     <View className="flex-1 bg-bg px-6 pt-7 gap-4.5">
       <View className="flex-row items-center gap-3">
         <Pressable onPress={() => router.back()} className="w-8 h-8 rounded-full border border-border bg-surface items-center justify-center">
-          <Text className="text-text">‹</Text>
+          <ChevronLeft size={18} color="#141414" />
         </Pressable>
         <Text className="font-display font-bold text-[19px] text-text">{nome}</Text>
       </View>

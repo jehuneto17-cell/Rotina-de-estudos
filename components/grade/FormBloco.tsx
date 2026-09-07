@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
@@ -78,7 +79,7 @@ export function FormBloco({
             {modo === 'editar' ? 'Editar bloco' : 'Novo bloco'}
           </Text>
           <Pressable onPress={() => router.back()} className="w-8 h-8 rounded-full bg-neutralBg items-center justify-center">
-            <Text className="text-textMuted">✕</Text>
+            <X size={16} color="#141414" />
           </Pressable>
         </View>
 

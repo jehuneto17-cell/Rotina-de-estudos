@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { X } from 'lucide-react-native';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
@@ -98,7 +99,7 @@ export default function Pomodoro() {
           <View className="flex-row items-center justify-between">
             <Text className="text-xs font-semibold text-textOnDarkMuted">Pomodoro</Text>
             <Pressable onPress={fechar} className="w-[30px] h-[30px] rounded-full bg-white/10 items-center justify-center">
-              <Text className="text-white text-sm">✕</Text>
+              <X size={16} color="#FFFFFF" />
             </Pressable>
           </View>
 

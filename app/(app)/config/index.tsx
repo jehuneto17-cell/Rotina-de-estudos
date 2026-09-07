@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ChevronRight } from 'lucide-react-native';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
@@ -49,7 +50,7 @@ export default function Config() {
             <Text className="flex-1 text-[13px] font-semibold text-primary">
               {convitesRecebidos[0].deNome} quer ver seu progresso
             </Text>
-            <Text className="text-primary text-xs font-bold">Ver ›</Text>
+            <View className="flex-row items-center gap-0.5"><Text className="text-primary text-xs font-bold">Ver</Text><ChevronRight size={16} color="#D42027" /></View>
           </Pressable>
         </Link>
       )}
@@ -80,14 +81,14 @@ export default function Config() {
         <Link href="/(app)/config/materias" asChild>
           <Pressable className="flex-row items-center gap-3 px-4 py-3.5">
             <Text className="flex-1 text-[15px] font-semibold text-text">Matérias</Text>
-            <Text className="text-textFaint">›</Text>
+            <ChevronRight size={16} color="#141414" />
           </Pressable>
         </Link>
         <View className="h-px bg-rowBorder mx-4" />
         <Link href="/(app)/config/compartilhar" asChild>
           <Pressable className="flex-row items-center gap-3 px-4 py-3.5">
             <Text className="flex-1 text-[15px] font-semibold text-text">Compartilhar progresso</Text>
-            <Text className="text-textFaint">›</Text>
+            <ChevronRight size={16} color="#141414" />
           </Pressable>
         </Link>
       </Card>

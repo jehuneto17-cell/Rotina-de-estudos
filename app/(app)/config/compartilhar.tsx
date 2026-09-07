@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronLeft, X } from 'lucide-react-native';
 import { ActivityIndicator, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../../hooks/useAuth';
@@ -28,7 +29,7 @@ export default function Compartilhar() {
     <View className="flex-1 bg-bg">
       <View className="flex-row items-center gap-3 px-6 pt-7 pb-4">
         <Pressable onPress={() => router.back()} className="w-8 h-8 rounded-full border border-border bg-surface items-center justify-center">
-          <Text className="text-text">‹</Text>
+          <ChevronLeft size={18} color="#141414" />
         </Pressable>
         <Text className="font-display font-bold text-xl text-text flex-1">Compartilhar progresso</Text>
       </View>
@@ -112,7 +113,7 @@ function AbaConvidar() {
             <View className="flex-row items-center justify-between mb-4">
               <Text className="font-display font-bold text-lg text-text">Convidar alguém</Text>
               <Pressable onPress={() => setModalAberto(false)} className="w-8 h-8 rounded-full bg-neutralBg items-center justify-center">
-                <Text className="text-textMuted">✕</Text>
+                <X size={16} color="#141414" />
               </Pressable>
             </View>
 

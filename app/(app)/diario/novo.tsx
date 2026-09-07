@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { X } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
@@ -104,7 +105,7 @@ export default function NovoRegistro() {
         <View className="flex-row items-center justify-between px-6 pt-6 pb-2">
           <Text className="font-display font-bold text-xl text-text">{editandoId ? 'Editar registro' : 'Novo registro'}</Text>
           <Pressable onPress={() => router.back()} className="w-8 h-8 rounded-full bg-neutralBg items-center justify-center">
-            <Text className="text-textMuted">✕</Text>
+            <X size={16} color="#141414" />
           </Pressable>
         </View>
 
@@ -190,7 +191,7 @@ export default function NovoRegistro() {
                   <View key={t} className="flex-row items-center gap-1.5 h-[30px] pl-3 pr-2.5 rounded-pill bg-text">
                     <Text className="text-white text-xs font-semibold">{t}</Text>
                     <Pressable onPress={() => setTags((s) => s.filter((x) => x !== t))}>
-                      <Text className="text-white text-xs">✕</Text>
+                      <X size={16} color="#FFFFFF" />
                     </Pressable>
                   </View>
                 ))}

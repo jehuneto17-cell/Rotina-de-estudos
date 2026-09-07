@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ChevronLeft, MoreVertical } from 'lucide-react-native';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { collection, doc, onSnapshot, orderBy, query, where } from 'firebase/firestore';
@@ -61,12 +62,12 @@ export default function DetalheRegistro() {
       <ScrollView contentContainerClassName="px-6 pt-6 pb-10 gap-5">
         <View className="flex-row items-center justify-between">
           <Pressable onPress={() => router.back()} className="w-8 h-8 rounded-full border border-rowBorder items-center justify-center">
-            <Text className="text-text">‹</Text>
+            <ChevronLeft size={18} color="#141414" />
           </Pressable>
           <Text className="text-sm font-semibold text-textMuted">{registro.data}</Text>
           <View>
             <Pressable onPress={() => setMenuAberto((v) => !v)} className="w-8 h-8 rounded-full border border-rowBorder items-center justify-center">
-              <Text className="text-text">⋮</Text>
+              <MoreVertical size={16} color="#141414" />
             </Pressable>
             {menuAberto && (
               <View className="absolute right-0 top-[38px] bg-surface border border-border rounded-md shadow-lg min-w-[130px] z-10">

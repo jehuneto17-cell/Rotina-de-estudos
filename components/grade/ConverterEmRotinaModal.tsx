@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X } from 'lucide-react-native';
 import { ActivityIndicator, Modal, Pressable, Text, View } from 'react-native';
 
 const DIAS = [
@@ -54,7 +55,7 @@ export function ConverterEmRotinaModal({
           <View className="flex-row items-center justify-between px-6 pt-6 pb-1">
             <Text className="font-display font-bold text-xl text-text">Transformar em rotina</Text>
             <Pressable onPress={onFechar} className="w-8 h-8 rounded-full bg-neutralBg items-center justify-center">
-              <Text className="text-textMuted">✕</Text>
+              <X size={16} color="#141414" />
             </Pressable>
           </View>
 

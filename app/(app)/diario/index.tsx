@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Link } from 'expo-router';
 import { useDados } from '../../../hooks/useDados';
@@ -188,11 +189,11 @@ function CalendarioDiario({ registros, materias }: { registros: RegistroDiario[]
       <View className="bg-surface border border-border rounded-card p-4 gap-3.5">
         <View className="flex-row items-center justify-between">
           <Pressable onPress={() => { setOffsetMes((v) => v - 1); setDiaSelecionado(null); }} className="w-[30px] h-[30px] rounded-full border border-rowBorder items-center justify-center">
-            <Text className="text-text">‹</Text>
+            <ChevronLeft size={18} color="#141414" />
           </Pressable>
           <Text className="text-[15px] font-bold text-text capitalize">{rotuloMes}</Text>
           <Pressable onPress={() => { setOffsetMes((v) => v + 1); setDiaSelecionado(null); }} className="w-[30px] h-[30px] rounded-full border border-rowBorder items-center justify-center">
-            <Text className="text-text">›</Text>
+            <ChevronRight size={16} color="#141414" />
           </Pressable>
         </View>
 

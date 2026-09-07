@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronLeft, Pencil, Trash2 } from 'lucide-react-native';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
@@ -75,7 +76,7 @@ export default function Materias() {
       <View className="flex-row items-center justify-between px-6 pt-7 pb-4">
         <View className="flex-row items-center gap-3">
           <Pressable onPress={() => router.back()} className="w-8 h-8 rounded-full border border-border bg-surface items-center justify-center">
-            <Text className="text-text">‹</Text>
+            <ChevronLeft size={18} color="#141414" />
           </Pressable>
           <Text className="font-display font-bold text-[22px] text-text">Matérias</Text>
         </View>
@@ -100,10 +101,10 @@ export default function Materias() {
               <Text className="flex-1 text-[15px] font-semibold text-text">{m.nome}</Text>
               <View className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: m.cor }} />
               <Pressable onPress={() => abrirEdicao(m)} className="w-[30px] h-[30px] rounded-full bg-neutralBg items-center justify-center">
-                <Text className="text-textMuted text-xs">✎</Text>
+                <Pencil size={14} color="#6E6E6E" />
               </Pressable>
               <Pressable onPress={() => excluir(m.id)} className="w-[30px] h-[30px] rounded-full bg-neutralBg items-center justify-center">
-                <Text className="text-primary text-xs">🗑</Text>
+                <Trash2 size={14} color="#D42027" />
               </Pressable>
             </View>
           ))
