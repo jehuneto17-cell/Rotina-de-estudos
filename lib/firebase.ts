@@ -4,7 +4,6 @@ import { initializeAuth, getAuth } from 'firebase/auth';
 // (package.json "react-native" export condition); tsc usa a condição "node".
 import { getReactNativePersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
@@ -28,4 +27,4 @@ export const auth =
     : initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
 
 export const db = getFirestore(app);
-export const storage = getStorage(app);
+// Sem Firebase Storage no MVP — Cloudinary assume os anexos (ver lib/anexos.ts).

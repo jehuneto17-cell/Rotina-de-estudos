@@ -56,7 +56,8 @@ export interface Tarefa {
 }
 
 export interface Anexo {
-  path: string;
+  url: string; // secure_url do Cloudinary — ver lib/anexos.ts
+  publicId: string;
   tipo: string;
   tamanhoBytes: number;
   nome: string;

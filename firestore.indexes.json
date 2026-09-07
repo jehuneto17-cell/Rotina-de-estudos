@@ -63,13 +63,6 @@
         { "fieldPath": "deUid", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "visualizadores",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "__name__", "order": "ASCENDING" }
-      ]
     }
   ],
   "fieldOverrides": []
