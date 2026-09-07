@@ -95,7 +95,7 @@ export default function Hoje() {
           <Text className="text-[13px] font-semibold text-warning flex-1">
             Você tem {atrasadas.length} revisão{atrasadas.length > 1 ? 'ões' : ''} atrasada{atrasadas.length > 1 ? 's' : ''}
           </Text>
-          <Pressable onPress={() => router.push('/(app)/diario')}>
+          <Pressable onPress={() => router.push('/(app)/revisao')}>
             <Text className="text-[13px] font-bold text-warning underline">Ver agora</Text>
           </Pressable>
         </View>

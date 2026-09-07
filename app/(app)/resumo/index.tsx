@@ -108,7 +108,12 @@ export default function Resumo() {
         <MetricCard label="Sequência de dias" value={String(progresso?.streak ?? 0)} color="text-primary" />
         <MetricCard label="Dias estudados no mês" value={String(progresso?.diasEstudadosMes ?? 0)} />
         <MetricCard label="Tempo total (mês)" value={formatarHoras(progresso?.minutosMes ?? 0)} />
-        <MetricCard label="Revisões atrasadas" value={String(progresso?.revisoesAtrasadas ?? 0)} color="text-warning" />
+        <MetricCard
+          label="Revisões atrasadas"
+          value={String(progresso?.revisoesAtrasadas ?? 0)}
+          color="text-warning"
+          onPress={() => router.push('/(app)/revisao')}
+        />
       </View>
 
       <View className="gap-3">
