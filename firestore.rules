@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ───────── helpers ─────────
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function ehDono(uid) {
+      return autenticado() && request.auth.uid == uid;
+    }
+
+    // A PERMISSÃO DE VÍNCULO: existe o documento => existe a permissão.
+    // Uma leitura de documento, sem query, sem listagem.
+    function ehVisualizadorDe(donoUid) {
+      return autenticado() && exists(
+        /databases/$(database)/documents/vinculos/$(donoUid)/visualizadores/$(request.auth.uid)
+      );
+    }
+
+    // Allowlist de campos do documento agregado. É ISTO que transforma
+    // "só compartilha número" de intenção de produto em restrição de banco:
+    // qualquer campo fora desta lista faz a ESCRITA falhar, então nunca
+    // existe conteúdo de diário dentro de um documento que um vínculo lê.
+    function agregadoValido() {
+      return request.resource.data.keys().hasOnly([
+        'nome', 'fotoUrl', 'streak', 'ultimoDiaEstudado',
+        'diasEstudadosMes', 'minutosMes', 'revisoesAtrasadas',
+        'materias', 'minutosPorMateriaMes', 'evolucaoSemanal', 'atualizadoEm'
+      ])
+      && request.resource.data.streak is int
+      && request.resource.data.diasEstudadosMes is int
+      && request.resource.data.minutosMes is int
+      && request.resource.data.revisoesAtrasadas is int;
+    }
+
+    // ───────── DADO PRIVADO — perfil, grade, diário, revisões, metas ─────────
+    // NÃO EXISTE, EM LUGAR NENHUM DESTE ARQUIVO, UMA CLÁUSULA QUE DÊ
+    // LEITURA DESTE SUBÁRVORE A QUEM NÃO É O DONO. Um vínculo não tem
+    // caminho de regra até aqui — o default deny fecha, não é "improvável".
+    match /usuarios/{uid} {
+      allow read, write: if ehDono(uid);
+
+      match /materias/{docId}  { allow read, write: if ehDono(uid); }
+      match /blocos/{docId}    { allow read, write: if ehDono(uid); }
+      match /rotinas/{docId}   { allow read, write: if ehDono(uid); }
+      match /tarefas/{docId}   { allow read, write: if ehDono(uid); }
+      match /registros/{docId} { allow read, write: if ehDono(uid); }
+      match /revisoes/{docId}  { allow read, write: if ehDono(uid); }
+      match /metas/{docId}     { allow read, write: if ehDono(uid); }
+    }
+
+    // ───────── ITEM #1: DADO AGREGADO COMPARTILHÁVEL ─────────
+    // Único documento que um perfil vinculado consegue ler do outro.
+    match /progressoPublico/{uid} {
+      allow read: if ehDono(uid) || ehVisualizadorDe(uid);
+
+      // Escrita SÓ do próprio dono, e SÓ no formato da allowlist.
+      allow create, update: if ehDono(uid) && agregadoValido();
+      allow delete: if ehDono(uid);
+    }
+
+    // ───────── VÍNCULOS (a permissão em si) ─────────
+    match /vinculos/{donoUid}/visualizadores/{visualizadorUid} {
+      // Dono vê quem o observa; o observador vê o próprio registro
+      // (e usa collectionGroup para listar de quem ele pode ver progresso).
+      allow read: if ehDono(donoUid) || ehDono(visualizadorUid);
+
+      // SÓ O DONO DO DADO CONCEDE ACESSO AO PRÓPRIO DADO.
+      // Ninguém consegue se autoconceder visualização de outra pessoa.
+      allow create: if ehDono(donoUid) && visualizadorUid != donoUid;
+
+      // Não há update: vínculo existe ou não existe.
+      allow update: if false;
+
+      // Dono revoga; visualizador pode sair sozinho.
+      allow delete: if ehDono(donoUid) || ehDono(visualizadorUid);
+    }
+
+    // ───────── CONVITES ─────────
+    match /convites/{conviteId} {
+      // O convidado encontra o convite pelo próprio e-mail do token.
+      // Não existe diretório de usuários: ninguém pesquisa e-mail alheio.
+      allow read: if ehDono(resource.data.deUid)
+                  || (autenticado() && resource.data.paraEmail == request.auth.token.email);
+
+      allow create: if ehDono(request.resource.data.deUid)
+                    && request.resource.data.status == 'pendente'
+                    && request.resource.data.paraEmail != request.auth.token.email;
+
+      // SÓ o convidado muda o status — o convidante nunca se aprova.
+      allow update: if autenticado()
+                    && resource.data.paraEmail == request.auth.token.email
+                    && resource.data.status == 'pendente'
+                    && request.resource.data.status in ['aceito', 'recusado']
+                    && request.resource.data.deUid == resource.data.deUid
+                    && request.resource.data.paraEmail == resource.data.paraEmail;
+
+      allow delete: if ehDono(resource.data.deUid);
+    }
+
+    // ───────── DEFAULT DENY ─────────
+    // Nenhuma outra coleção é acessível. Qualquer caminho não listado acima
+    // é negado, inclusive coleções criadas por engano no futuro.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

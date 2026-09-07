@@ -1,0 +1,76 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "registros",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "materiaId", "order": "ASCENDING" },
+        { "fieldPath": "data", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "registros",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tags", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "data", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "revisoes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "dataPrevista", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "revisoes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "registroId", "order": "ASCENDING" },
+        { "fieldPath": "intervalo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "blocos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "diaSemana", "order": "ASCENDING" },
+        { "fieldPath": "horaInicio", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rotinas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ativa", "order": "ASCENDING" },
+        { "fieldPath": "diasSemana", "arrayConfig": "CONTAINS" }
+      ]
+    },
+    {
+      "collectionGroup": "convites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "paraEmail", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "convites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "deUid", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "visualizadores",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "__name__", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
