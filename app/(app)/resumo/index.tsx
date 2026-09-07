@@ -1,20 +1,27 @@
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../../hooks/useAuth';
 import { useDados } from '../../../hooks/useDados';
 import { useProgresso } from '../../../hooks/useProgresso';
 import { useRegistrosDiario } from '../../../hooks/useRegistrosDiario';
-import { diaSemanaDe, diferencaEmDias, hojeCivil, somarDias } from '../../../lib/datas';
+import { diaSemanaDe, diferencaEmDias, hojeCivil, paraDataCivil, somarDias } from '../../../lib/datas';
 import { progressoDaMeta } from '../../../lib/metas';
+import { buscarRegistrosPeriodo, buscarRevisoesPeriodo } from '../../../lib/relatorio';
+import { exportarPdf, exportarTexto } from '../../../lib/exportarRelatorio';
 import { MetricCard } from '../../../components/resumo/MetricCard';
 import { BarraMeta } from '../../../components/resumo/BarraMeta';
 import { GraficoEvolucao, type DiaEvolucao } from '../../../components/resumo/GraficoEvolucao';
+import { GraficoMeses } from '../../../components/resumo/GraficoMeses';
+import { MapaAtividade } from '../../../components/resumo/MapaAtividade';
 import { Card } from '../../../components/ui/Card';
 import { EstadoVazio } from '../../../components/ui/EstadoVazioErro';
 import { MateriaIcon } from '../../../components/ui/MateriaIcon';
+import type { RegistroDiario, Revisao } from '../../../types/modelos';
 
 const LETRA_DIA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']; // getDay(): 0=dom
+const MES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+const MES_NOME = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
 function formatarHoras(min: number) {
   return `${Math.round(min / 60)}h`;
@@ -68,6 +75,84 @@ export default function Resumo() {
           : `Você ficou ${diasSemEstudar} dias sem estudar!`;
 
   const sessoesRecentes = registros.slice(0, 5); // já vem ordenado por data desc (useRegistrosDiario)
+
+  // Relatório de 4 meses + mapa de atividade: busca dedicada por período
+  // (lib/relatorio.ts), não depende do limit(30) de useRegistrosDiario.
+  const [registrosPeriodo, setRegistrosPeriodo] = useState<RegistroDiario[] | null>(null);
+  const [revisoesPeriodo, setRevisoesPeriodo] = useState<Revisao[] | null>(null);
+  const [exportando, setExportando] = useState<'texto' | 'pdf' | null>(null);
+  const hojeDate = useMemo(() => new Date(), []);
+  const inicioPeriodo = useMemo(
+    () => paraDataCivil(new Date(hojeDate.getFullYear(), hojeDate.getMonth() - 3, 1)),
+    [hojeDate]
+  );
+
+  useEffect(() => {
+    if (!usuario) return;
+    buscarRegistrosPeriodo(usuario.uid, inicioPeriodo, hoje).then(setRegistrosPeriodo);
+    buscarRevisoesPeriodo(usuario.uid, inicioPeriodo, hoje).then(setRevisoesPeriodo);
+  }, [usuario, inicioPeriodo, hoje]);
+
+  const meses4 = useMemo(() => {
+    if (!registrosPeriodo) return [];
+    return Array.from({ length: 4 }, (_, i) => {
+      const d = new Date(hojeDate.getFullYear(), hojeDate.getMonth() - 3 + i, 1);
+      const chave = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const doMes = registrosPeriodo.filter((r) => r.data.startsWith(chave));
+      const dias = new Set(doMes.map((r) => r.data)).size;
+      return { label: MES_ABREV[d.getMonth()], dias, destaque: i === 3 };
+    });
+  }, [registrosPeriodo, hojeDate]);
+
+  const mapaAtividade = useMemo(() => {
+    if (!registrosPeriodo) return { diasEstudados: new Set<string>(), diasComRevisao: new Set<string>() };
+    const doMes = registrosPeriodo.filter((r) => r.data.startsWith(mesCorrente));
+    const revisoesDoMes = (revisoesPeriodo ?? []).filter((r) => r.dataPrevista.startsWith(mesCorrente));
+    return {
+      diasEstudados: new Set(doMes.map((r) => r.data)),
+      diasComRevisao: new Set(revisoesDoMes.map((r) => r.dataPrevista)),
+    };
+  }, [registrosPeriodo, revisoesPeriodo, mesCorrente]);
+
+  const diasNoMesCorrente = new Date(hojeDate.getFullYear(), hojeDate.getMonth() + 1, 0).getDate();
+
+  async function dadosParaExport() {
+    const doMes = (registrosPeriodo ?? []).filter((r) => r.data.startsWith(mesCorrente));
+    const revisoesDoMes = (revisoesPeriodo ?? []).filter((r) => r.dataPrevista.startsWith(mesCorrente));
+    const porDisc = new Map<string, { sessoes: number; minutos: number }>();
+    doMes.forEach((r) => {
+      const materia = materias.find((m) => m.id === r.materiaId);
+      const nome = materia?.nome ?? 'Sem matéria';
+      const atual = porDisc.get(nome) ?? { sessoes: 0, minutos: 0 };
+      porDisc.set(nome, { sessoes: atual.sessoes + 1, minutos: atual.minutos + r.duracaoMin });
+    });
+    return {
+      mesNome: `${MES_NOME[hojeDate.getMonth()]} de ${hojeDate.getFullYear()}`,
+      diasEstudados: new Set(doMes.map((r) => r.data)).size,
+      minutosTotal: doMes.reduce((s, r) => s + r.duracaoMin, 0),
+      revisoesFeitas: revisoesDoMes.filter((r) => r.status === 'feita').length,
+      revisoesTotal: revisoesDoMes.length,
+      porDisciplina: [...porDisc.entries()].map(([nome, v]) => ({ nome, ...v })),
+    };
+  }
+
+  async function handleExportarTexto() {
+    setExportando('texto');
+    try {
+      await exportarTexto(await dadosParaExport());
+    } finally {
+      setExportando(null);
+    }
+  }
+
+  async function handleExportarPdf() {
+    setExportando('pdf');
+    try {
+      await exportarPdf(await dadosParaExport());
+    } finally {
+      setExportando(null);
+    }
+  }
 
   if (carregandoInicial) {
     return (
@@ -145,7 +230,26 @@ export default function Resumo() {
       </View>
 
       <View className="gap-3">
-        <Text className="text-base font-bold text-text">Relatório mensal</Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-base font-bold text-text">Relatório mensal</Text>
+          <View className="flex-row gap-2">
+            <Pressable
+              onPress={handleExportarTexto}
+              disabled={exportando !== null}
+              className="h-8 px-3 rounded-md border border-border items-center justify-center flex-row gap-1"
+            >
+              {exportando === 'texto' ? <ActivityIndicator size="small" color="#141414" /> : <Text className="text-xs font-semibold text-text">⬇ Texto</Text>}
+            </Pressable>
+            <Pressable
+              onPress={handleExportarPdf}
+              disabled={exportando !== null}
+              className="h-8 px-3 rounded-md border border-border items-center justify-center flex-row gap-1"
+            >
+              {exportando === 'pdf' ? <ActivityIndicator size="small" color="#141414" /> : <Text className="text-xs font-semibold text-text">🖨 PDF</Text>}
+            </Pressable>
+          </View>
+        </View>
+
         <Card className="p-0 overflow-hidden">
           {relatorioMensal.map((r, i) => (
             <View
@@ -159,6 +263,28 @@ export default function Resumo() {
             </View>
           ))}
         </Card>
+
+        {meses4.length > 0 && (
+          <View className="gap-2">
+            <Text className="text-xs font-semibold text-textFaint">Dias estudados — últimos 4 meses</Text>
+            <GraficoMeses meses={meses4} />
+          </View>
+        )}
+
+        <View className="gap-2">
+          <Text className="text-xs font-semibold text-textFaint">
+            Mapa de atividade — {MES_NOME[hojeDate.getMonth()]}
+          </Text>
+          <Card>
+            <MapaAtividade
+              diasNoMes={diasNoMesCorrente}
+              diasEstudados={mapaAtividade.diasEstudados}
+              diasComRevisao={mapaAtividade.diasComRevisao}
+              hoje={hoje}
+              onSelecionarDia={() => router.push('/(app)/diario')}
+            />
+          </Card>
+        </View>
       </View>
 
       {sessoesRecentes.length > 0 && (
