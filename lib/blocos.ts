@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 
 export async function criarBloco(uid: string, dados: {
@@ -47,4 +47,32 @@ export async function converterBlocoEmRotina(
     criadoEm: serverTimestamp(),
   });
   await deleteDoc(doc(db, 'usuarios', uid, 'blocos', blocoId));
+}
+
+/**
+ * Limpa `concluidoEm`/`checks` de todo bloco e rotina — desmarca tudo sem
+ * apagar os blocos/rotinas em si. Recupera o "Limpar todos os checks" das
+ * Configurações do app antigo.
+ */
+export async function resetarTodosOsChecks(uid: string): Promise<number> {
+  const [blocosSnap, rotinasSnap] = await Promise.all([
+    getDocs(collection(db, 'usuarios', uid, 'blocos')),
+    getDocs(collection(db, 'usuarios', uid, 'rotinas')),
+  ]);
+
+  const batch = writeBatch(db);
+  let total = 0;
+  blocosSnap.docs.forEach((d) => {
+    if (Object.keys(d.data().concluidoEm ?? {}).length === 0) return;
+    batch.update(d.ref, { concluidoEm: {} });
+    total += 1;
+  });
+  rotinasSnap.docs.forEach((d) => {
+    if (Object.keys(d.data().checks ?? {}).length === 0) return;
+    batch.update(d.ref, { checks: {} });
+    total += 1;
+  });
+
+  if (total > 0) await batch.commit();
+  return total;
 }

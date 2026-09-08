@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { ChevronRight } from 'lucide-react-native';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { ChevronRight, RotateCcw } from 'lucide-react-native';
+import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { Link, router } from 'expo-router';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../../../lib/firebase';
 import { useAuth } from '../../../hooks/useAuth';
 import { useConvitesRecebidos } from '../../../hooks/useConvites';
+import { resetarTodosOsChecks } from '../../../lib/blocos';
 import { AvatarIniciais } from '../../../components/ui/AvatarIniciais';
 import { Card } from '../../../components/ui/Card';
 
@@ -19,6 +20,19 @@ export default function Config() {
   const [exame, setExame] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState(false);
+  const [confirmandoReset, setConfirmandoReset] = useState(false);
+  const [resetando, setResetando] = useState(false);
+
+  async function confirmarReset() {
+    if (!usuario) return;
+    setResetando(true);
+    try {
+      await resetarTodosOsChecks(usuario.uid);
+    } finally {
+      setResetando(false);
+      setConfirmandoReset(false);
+    }
+  }
 
   useEffect(() => {
     if (!usuario) return;
@@ -93,11 +107,44 @@ export default function Config() {
         </Link>
       </Card>
 
+      <Card className="p-0 overflow-hidden">
+        <Pressable onPress={() => setConfirmandoReset(true)} className="flex-row items-center gap-3 px-4 py-3.5">
+          <Text className="flex-1 text-[15px] font-semibold text-text">Limpar todos os checks</Text>
+          <RotateCcw size={16} color="#9A9A9A" />
+        </Pressable>
+      </Card>
+
       <View className="border-t border-border pt-4">
         <Pressable onPress={() => signOut(auth).then(() => router.replace('/login'))}>
           <Text className="text-[15px] font-semibold text-primary">Sair da conta</Text>
         </Pressable>
       </View>
+
+      <Modal visible={confirmandoReset} transparent animationType="fade" onRequestClose={() => setConfirmandoReset(false)}>
+        <View className="flex-1 bg-black/45 items-center justify-center px-8">
+          <View className="bg-surface rounded-lg p-5 gap-4 w-full max-w-[340px]">
+            <Text className="font-display font-bold text-base text-text">Limpar todos os checks?</Text>
+            <Text className="text-[13px] text-textMuted leading-5">
+              Desmarca todos os blocos e rotinas concluídos. Os registros do diário e as revisões não são afetados.
+            </Text>
+            <View className="flex-row gap-2.5">
+              <Pressable
+                onPress={() => setConfirmandoReset(false)}
+                className="flex-1 h-11 rounded-md border border-border items-center justify-center"
+              >
+                <Text className="text-text text-sm font-semibold">Cancelar</Text>
+              </Pressable>
+              <Pressable
+                onPress={confirmarReset}
+                disabled={resetando}
+                className="flex-1 h-11 rounded-md bg-primary items-center justify-center"
+              >
+                <Text className="text-white text-sm font-semibold">{resetando ? 'Limpando…' : 'Limpar'}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

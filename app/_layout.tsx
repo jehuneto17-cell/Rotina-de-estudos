@@ -8,6 +8,7 @@ import { View } from 'react-native';
 import { AuthProvider } from '../contexts/AuthContext';
 import { DadosProvider } from '../contexts/DadosContext';
 import { TemaProvider } from '../contexts/TemaContext';
+import { BannerOffline } from '../components/ui/BannerOffline';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -24,6 +25,7 @@ export default function RootLayout() {
       <TemaProvider>
         <AuthProvider>
           <DadosProvider>
+            <BannerOffline />
             <Stack screenOptions={{ headerShown: false }} />
             <StatusBar style="dark" />
           </DadosProvider>
