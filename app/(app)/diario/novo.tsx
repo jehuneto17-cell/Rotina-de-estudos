@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Check, X } from 'lucide-react-native';
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Check, Paperclip, X } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebase';
@@ -8,10 +9,11 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useDados } from '../../../hooks/useDados';
 import { useRegistrosDiario } from '../../../hooks/useRegistrosDiario';
 import { atualizarRegistro, criarRegistro } from '../../../lib/diario';
+import { enviarAnexo } from '../../../lib/anexos';
 import { hojeCivil } from '../../../lib/datas';
 import { MateriaIcon } from '../../../components/ui/MateriaIcon';
 import { CampoAutocomplete } from '../../../components/ui/CampoAutocomplete';
-import type { RegistroDiario } from '../../../types/modelos';
+import type { Anexo, RegistroDiario } from '../../../types/modelos';
 
 // Tela 11 — modal full-screen (mobile) / drawer (web), conforme USER-FLOWS.md.
 // Params opcionais: ?editar=<registroId> (edição, vindo do Diário Detalhe) ou
@@ -33,6 +35,9 @@ export default function NovoRegistro() {
   const [salvando, setSalvando] = useState(false);
   const [erros, setErros] = useState<{ materia?: boolean; conteudo?: boolean; duracao?: boolean }>({});
   const [gerarRevisoes, setGerarRevisoes] = useState(true);
+  const [anexo, setAnexo] = useState<Anexo | null>(null);
+  const [enviandoAnexo, setEnviandoAnexo] = useState(false);
+  const [erroAnexo, setErroAnexo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!usuario || !editandoId) return;
@@ -57,6 +62,33 @@ export default function NovoRegistro() {
       ...registros.map((r) => r.conteudo),
     ]),
   ];
+
+  // Só imagem por enquanto (ponytail: PDF pediria expo-document-picker, sem
+  // uso relatado ainda — adicionar se surgir a necessidade).
+  async function escolherAnexo() {
+    setErroAnexo(null);
+    const resultado = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+    });
+    if (resultado.canceled) return;
+    const asset = resultado.assets[0];
+    setEnviandoAnexo(true);
+    try {
+      const blob = await (await fetch(asset.uri)).blob();
+      const novoAnexo = await enviarAnexo({
+        registroId: editandoId ?? 'novo',
+        arquivo: blob,
+        nome: asset.fileName ?? 'anexo.jpg',
+        tipo: asset.mimeType ?? blob.type ?? 'image/jpeg',
+      });
+      setAnexo(novoAnexo);
+    } catch (e) {
+      setErroAnexo(e instanceof Error ? e.message : 'Falha ao enviar anexo.');
+    } finally {
+      setEnviandoAnexo(false);
+    }
+  }
 
   function adicionarTag(nome: string) {
     const t = nome.trim();
@@ -99,7 +131,7 @@ export default function NovoRegistro() {
           notas,
           data,
           tags,
-          anexo: null, // ponytail: upload de anexo pendente de expo-image-picker, ver PRÓXIMO PASSO
+          anexo,
           origem: params.origem === 'pomodoro' ? 'pomodoro' : 'manual',
           gerarRevisoes,
         });
@@ -226,6 +258,37 @@ export default function NovoRegistro() {
               </View>
             )}
           </View>
+
+          {!editandoId && (
+            <View>
+              <Text className="text-xs font-semibold text-textFaint mb-2">Anexo</Text>
+              {anexo ? (
+                <View className="flex-row items-center gap-3">
+                  <Image source={{ uri: anexo.url }} className="w-14 h-14 rounded-sm" resizeMode="cover" />
+                  <Text className="text-sm text-textMuted flex-1" numberOfLines={1}>{anexo.nome}</Text>
+                  <Pressable onPress={() => setAnexo(null)} className="w-8 h-8 rounded-full bg-neutralBg items-center justify-center">
+                    <X size={16} color="#141414" />
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={escolherAnexo}
+                  disabled={enviandoAnexo}
+                  className="h-11 rounded-sm border border-dashed border-border flex-row items-center justify-center gap-2"
+                >
+                  {enviandoAnexo ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    <>
+                      <Paperclip size={16} color="#767676" />
+                      <Text className="text-sm text-textMuted">Anexar imagem</Text>
+                    </>
+                  )}
+                </Pressable>
+              )}
+              {erroAnexo && <Text className="text-primary text-[13px] font-semibold mt-1.5">{erroAnexo}</Text>}
+            </View>
+          )}
 
           {!editandoId && (
             <Pressable
