@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react-native';
+import { Check, X } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { doc, getDoc } from 'firebase/firestore';
@@ -10,6 +10,7 @@ import { useRegistrosDiario } from '../../../hooks/useRegistrosDiario';
 import { atualizarRegistro, criarRegistro } from '../../../lib/diario';
 import { hojeCivil } from '../../../lib/datas';
 import { MateriaIcon } from '../../../components/ui/MateriaIcon';
+import { CampoAutocomplete } from '../../../components/ui/CampoAutocomplete';
 import type { RegistroDiario } from '../../../types/modelos';
 
 // Tela 11 — modal full-screen (mobile) / drawer (web), conforme USER-FLOWS.md.
@@ -31,6 +32,7 @@ export default function NovoRegistro() {
   const [rascunhoTag, setRascunhoTag] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erros, setErros] = useState<{ materia?: boolean; conteudo?: boolean; duracao?: boolean }>({});
+  const [gerarRevisoes, setGerarRevisoes] = useState(true);
 
   useEffect(() => {
     if (!usuario || !editandoId) return;
@@ -47,6 +49,14 @@ export default function NovoRegistro() {
   }, [usuario, editandoId]);
 
   const tagsExistentes = [...new Set(registros.flatMap((r) => r.tags))].filter((t) => !tags.includes(t));
+
+  // Sugestões de conteúdo: prioriza os registros da mesma matéria, depois o resto.
+  const conteudosAnteriores = [
+    ...new Set([
+      ...registros.filter((r) => r.materiaId === materiaId).map((r) => r.conteudo),
+      ...registros.map((r) => r.conteudo),
+    ]),
+  ];
 
   function adicionarTag(nome: string) {
     const t = nome.trim();
@@ -91,6 +101,7 @@ export default function NovoRegistro() {
           tags,
           anexo: null, // ponytail: upload de anexo pendente de expo-image-picker, ver PRÓXIMO PASSO
           origem: params.origem === 'pomodoro' ? 'pomodoro' : 'manual',
+          gerarRevisoes,
         });
       }
       router.back();
@@ -137,11 +148,11 @@ export default function NovoRegistro() {
 
           <View>
             <Text className="text-xs font-semibold text-textFaint mb-2">Conteúdo estudado</Text>
-            <TextInput
+            <CampoAutocomplete
               value={conteudo}
               onChangeText={(v) => { setConteudo(v); setErros((e) => ({ ...e, conteudo: false })); }}
+              sugestoes={conteudosAnteriores}
               placeholder="Ex.: Lei 8.112 — Regime disciplinar"
-              placeholderTextColor="#B0B0B0"
               className={`h-[46px] rounded-sm border px-3 text-[15px] text-text ${erros.conteudo ? 'border-primary' : 'border-border'}`}
             />
             {erros.conteudo && <Text className="text-primary text-[13px] font-semibold mt-1.5">Descreva o conteúdo estudado.</Text>}
@@ -215,6 +226,20 @@ export default function NovoRegistro() {
               </View>
             )}
           </View>
+
+          {!editandoId && (
+            <Pressable
+              onPress={() => setGerarRevisoes((v) => !v)}
+              className="flex-row items-center gap-2.5"
+            >
+              <View className={`w-5 h-5 rounded-[5px] items-center justify-center ${gerarRevisoes ? 'bg-primary' : 'border-[1.5px] border-border'}`}>
+                {gerarRevisoes && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+              </View>
+              <Text className="text-[13px] text-textMuted flex-1">
+                Agendar revisão espaçada (1, 3, 7 e 15 dias)
+              </Text>
+            </Pressable>
+          )}
         </ScrollView>
 
         <View className="px-6 py-4 border-t border-rowBorder">

@@ -13,7 +13,11 @@ import { db } from './firebase';
 import { gerarRevisoes } from './revisoes';
 import type { Anexo } from '../types/modelos';
 
-/** Registra a sessão + gera as 4 revisões (1/3/7/15) num writeBatch — atômico (DATABASE.md §4). */
+/**
+ * Registra a sessão e, por padrão, gera as 4 revisões (1/3/7/15) num
+ * writeBatch — atômico (DATABASE.md §4). `gerarRevisoes: false` pula a
+ * geração (ex.: revisão de conteúdo avulso que não precisa repetição).
+ */
 export async function criarRegistro(params: {
   uid: string;
   materiaId: string;
@@ -24,6 +28,7 @@ export async function criarRegistro(params: {
   tags: string[];
   anexo: Anexo | null;
   origem: 'manual' | 'pomodoro';
+  gerarRevisoes?: boolean;
 }) {
   const batch = writeBatch(db);
   const registroRef = doc(collection(db, 'usuarios', params.uid, 'registros'));
@@ -40,15 +45,17 @@ export async function criarRegistro(params: {
     criadoEm: serverTimestamp(),
   });
 
-  const revisoes = gerarRevisoes({
-    registroId: registroRef.id,
-    materiaId: params.materiaId,
-    resumo: params.conteudo,
-    dataRegistro: params.data,
-  });
-  for (const revisao of revisoes) {
-    const revisaoRef = doc(collection(db, 'usuarios', params.uid, 'revisoes'));
-    batch.set(revisaoRef, { ...revisao, criadoEm: serverTimestamp() });
+  if (params.gerarRevisoes !== false) {
+    const revisoes = gerarRevisoes({
+      registroId: registroRef.id,
+      materiaId: params.materiaId,
+      resumo: params.conteudo,
+      dataRegistro: params.data,
+    });
+    for (const revisao of revisoes) {
+      const revisaoRef = doc(collection(db, 'usuarios', params.uid, 'revisoes'));
+      batch.set(revisaoRef, { ...revisao, criadoEm: serverTimestamp() });
+    }
   }
 
   await batch.commit();
