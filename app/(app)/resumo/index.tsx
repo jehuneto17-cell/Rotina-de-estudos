@@ -6,7 +6,7 @@ import { useDados } from '../../../hooks/useDados';
 import { useProgresso } from '../../../hooks/useProgresso';
 import { useRegistrosDiario } from '../../../hooks/useRegistrosDiario';
 import { diaSemanaDe, diferencaEmDias, hojeCivil, paraDataCivil, somarDias } from '../../../lib/datas';
-import { progressoDaMeta } from '../../../lib/metas';
+import { definirMeta, progressoDaMeta } from '../../../lib/metas';
 import { buscarRegistrosPeriodo, buscarRevisoesPeriodo } from '../../../lib/relatorio';
 import { exportarPdf, exportarTexto } from '../../../lib/exportarRelatorio';
 import { MetricCard } from '../../../components/resumo/MetricCard';
@@ -17,6 +17,7 @@ import { MapaAtividade } from '../../../components/resumo/MapaAtividade';
 import { Card } from '../../../components/ui/Card';
 import { EstadoVazio } from '../../../components/ui/EstadoVazioErro';
 import { MateriaIcon } from '../../../components/ui/MateriaIcon';
+import { ModalDefinirMeta } from '../../../components/resumo/ModalDefinirMeta';
 import type { RegistroDiario, Revisao } from '../../../types/modelos';
 
 const LETRA_DIA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']; // getDay(): 0=dom
@@ -37,6 +38,7 @@ export default function Resumo() {
   const hoje = hojeCivil();
 
   const [materiaEvolucaoId, setMateriaEvolucaoId] = useState<string | null>(null);
+  const [materiaMetaId, setMateriaMetaId] = useState<string | null>(null);
   const materiaAtiva = materiaEvolucaoId ?? materias[0]?.id ?? null;
 
   const diasEvolucao: DiaEvolucao[] = useMemo(() => {
@@ -202,7 +204,7 @@ export default function Resumo() {
       </View>
 
       <View className="gap-3">
-        <Text className="text-base font-bold text-text">Metas da semana</Text>
+        <Text className="text-base font-bold text-text">Metas</Text>
         {materias.map((m) => {
           const meta = metas.find((mt) => mt.materiaId === m.id);
           const prog = meta ? progressoDaMeta(meta, registros, hoje) : null;
@@ -213,11 +215,30 @@ export default function Resumo() {
               nome={m.nome}
               minutosFeitos={prog?.minutosFeitos ?? 0}
               minutosAlvo={meta?.minutosAlvo ?? null}
-              onDefinirMeta={() => {}}
+              minutosFeitosMes={prog?.minutosFeitosMes ?? 0}
+              minutosAlvoMensal={meta?.minutosAlvoMensal ?? null}
+              onDefinirMeta={() => setMateriaMetaId(m.id)}
             />
           );
         })}
       </View>
+
+      <ModalDefinirMeta
+        visivel={materiaMetaId !== null}
+        nomeMateria={materias.find((m) => m.id === materiaMetaId)?.nome ?? ''}
+        horasSemanaAtual={((metas.find((mt) => mt.materiaId === materiaMetaId)?.minutosAlvo ?? 0) / 60)}
+        horasMesAtual={((metas.find((mt) => mt.materiaId === materiaMetaId)?.minutosAlvoMensal ?? 0) / 60)}
+        onFechar={() => setMateriaMetaId(null)}
+        onSalvar={async (horasSemana, horasMes) => {
+          if (!usuario || !materiaMetaId) return;
+          await definirMeta({
+            uid: usuario.uid,
+            materiaId: materiaMetaId,
+            minutosAlvo: Math.round(horasSemana * 60),
+            minutosAlvoMensal: Math.round(horasMes * 60),
+          });
+        }}
+      />
 
       <View className="gap-3">
         <Text className="text-base font-bold text-text">Evolução</Text>

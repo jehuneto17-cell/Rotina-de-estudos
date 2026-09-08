@@ -94,7 +94,8 @@ export interface Revisao {
 export interface Meta {
   id: string; // = materiaId
   materiaId: string;
-  minutosAlvo: number;
+  minutosAlvo: number; // meta semanal
+  minutosAlvoMensal: number | null; // meta mensal — independente da semanal, ambas opcionais
   criadoEm: number;
 }
 
