@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { initializeAuth, getAuth } from 'firebase/auth';
+import { initializeAuth, browserPopupRedirectResolver, browserLocalPersistence } from 'firebase/auth';
 // @ts-expect-error — só existe no build resolvido por Metro para React Native
 // (package.json "react-native" export condition); tsc usa a condição "node".
 import { getReactNativePersistence } from 'firebase/auth';
@@ -20,10 +20,17 @@ const firebaseConfig = {
 
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Persistência de sessão via AsyncStorage no nativo; a web usa o padrão do SDK.
+// Persistência de sessão via AsyncStorage no nativo. Na web, resolver explícito:
+// getAuth(app) sozinho não registra o browserPopupRedirectResolver de forma
+// confiável com o bundler do Expo web, e sem ele signInWithRedirect nunca grava
+// o estado pendente no sessionStorage antes de navegar — o retorno do Google
+// então não encontra nada e getRedirectResult sempre resolve null.
 export const auth =
   Platform.OS === 'web'
-    ? getAuth(app)
+    ? initializeAuth(app, {
+        persistence: browserLocalPersistence,
+        popupRedirectResolver: browserPopupRedirectResolver,
+      })
     : initializeAuth(app, { persistence: getReactNativePersistence(AsyncStorage) });
 
 export const db = getFirestore(app);
