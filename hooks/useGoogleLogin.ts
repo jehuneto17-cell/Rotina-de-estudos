@@ -4,8 +4,9 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import {
   GoogleAuthProvider,
+  getRedirectResult,
   signInWithCredential,
-  signInWithPopup,
+  signInWithRedirect,
 } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
@@ -53,23 +54,29 @@ export function useGoogleLogin() {
   const [entrando, setEntrando] = useState(false);
   const [erro, setErro] = useState(false);
 
+  // Trata o retorno do signInWithRedirect (popup falha com COOP em vários navegadores).
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    getRedirectResult(auth)
+      .then((resultado) => {
+        if (!resultado) return;
+        const { uid, displayName, email, photoURL } = resultado.user;
+        return garantirPerfil(uid, displayName ?? '', email ?? '', photoURL);
+      })
+      .catch(() => setErro(true));
+  }, []);
+
   async function entrarComGoogle() {
     setErro(false);
     setEntrando(true);
     try {
       if (Platform.OS === 'web') {
-        const resultado = await signInWithPopup(auth, new GoogleAuthProvider());
-        const { uid, displayName, email, photoURL } = resultado.user;
-        await garantirPerfil(uid, displayName ?? '', email ?? '', photoURL);
+        await signInWithRedirect(auth, new GoogleAuthProvider());
       } else {
         await promptAsync();
       }
-    } catch (e) {
-      // 'cancelled-popup-request'/'popup-closed-by-user' são o usuário desistindo, não erro real.
-      const codigo = (e as { code?: string })?.code ?? '';
-      if (codigo !== 'auth/cancelled-popup-request' && codigo !== 'auth/popup-closed-by-user') {
-        setErro(true);
-      }
+    } catch {
+      setErro(true);
     } finally {
       setEntrando(false);
     }
