@@ -12,6 +12,7 @@ export default function DebugAuth() {
   }
 
   useEffect(() => {
+    add('URL completa: ' + window.location.href);
     add('montou, currentUser=' + (auth.currentUser?.email ?? 'null'));
     try {
       const chaves = Object.keys(sessionStorage).filter((k) => k.includes('firebase'));
