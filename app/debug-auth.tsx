@@ -13,6 +13,16 @@ export default function DebugAuth() {
 
   useEffect(() => {
     add('montou, currentUser=' + (auth.currentUser?.email ?? 'null'));
+    try {
+      const chaves = Object.keys(sessionStorage).filter((k) => k.includes('firebase'));
+      add('sessionStorage firebase keys: ' + JSON.stringify(chaves));
+    } catch (e) {
+      add('sessionStorage erro: ' + e);
+    }
+    try {
+      const marca = sessionStorage.getItem('debug_marca_antes_redirect');
+      add('marca gravada antes do redirect ainda existe? ' + (marca ?? 'NAO (sessionStorage foi resetado)'));
+    } catch {}
     add('chamando getRedirectResult...');
     getRedirectResult(auth)
       .then((r) => add('getRedirectResult OK: ' + (r ? r.user.email : 'null (sem redirect pendente)')))
@@ -29,8 +39,12 @@ export default function DebugAuth() {
       <Pressable
         className="bg-black p-4 rounded mb-4"
         onPress={() => {
-          add('clicou, chamando signInWithRedirect...');
-          signInWithRedirect(auth, new GoogleAuthProvider());
+          try {
+            sessionStorage.setItem('debug_marca_antes_redirect', Date.now().toString());
+          } catch {}
+          signInWithRedirect(auth, new GoogleAuthProvider()).catch((e) => {
+            alert('erro signInWithRedirect: ' + e.code + ' ' + e.message);
+          });
         }}
       >
         <Text className="text-white text-center">Testar signInWithRedirect</Text>
