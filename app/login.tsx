@@ -1,10 +1,16 @@
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Redirect } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
+import { useAuth } from '../hooks/useAuth';
 import { useGoogleLogin } from '../hooks/useGoogleLogin';
 
 // Tela 1 — handoff Login.dc.html.
 export default function Login() {
+  const { usuario } = useAuth();
   const { pronto, entrando, erro, entrarComGoogle } = useGoogleLogin();
+
+  // signInWithRedirect volta pra esta mesma tela; sem isso o login nunca navega adiante.
+  if (usuario) return <Redirect href="/" />;
 
   return (
     <View className="flex-1 bg-bg items-center">
