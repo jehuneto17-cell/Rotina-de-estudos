@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
 import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../hooks/useAuth';
@@ -62,7 +63,9 @@ export default function Onboarding() {
         onboardingConcluido: true,
         atualizadoEm: serverTimestamp(),
       });
-      // index.tsx redireciona pra /(app)/hoje assim que materias.length > 0 — nada mais a fazer aqui.
+      // index.tsx (Splash) já foi desmontada ao navegar pra cá — precisa
+      // sair da tela explicitamente, senão fica preso aqui pra sempre.
+      router.replace('/(app)/hoje');
     } finally {
       setConcluindo(false);
     }

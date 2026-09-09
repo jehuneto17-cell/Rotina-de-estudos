@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useDados } from '../../../hooks/useDados';
 import { useRegistrosDiario } from '../../../hooks/useRegistrosDiario';
 import { Chip } from '../../../components/ui/Chip';
@@ -70,7 +70,7 @@ function ListaDiario({ registros, materias }: { registros: RegistroDiario[]; mat
       <EstadoVazio
         mensagem="Seu diário está vazio. Registre sua primeira sessão de estudo."
         labelAcao="Registrar sessão"
-        onAcao={() => {}}
+        onAcao={() => router.push('/(app)/diario/novo')}
       />
     );
   }

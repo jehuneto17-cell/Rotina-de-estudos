@@ -29,7 +29,7 @@ const DadosContext = createContext<DadosState>(vazio);
 
 const CHAVE_CACHE = 'cache_dados_v1';
 
-function useColecao<T extends { id: string }>(uid: string | null, nome: string) {
+function useColecao<T extends { id: string }>(uid: string | null, nome: string, aoCarregar?: () => void) {
   const [itens, setItens] = useState<T[]>([]);
 
   useEffect(() => {
@@ -41,6 +41,7 @@ function useColecao<T extends { id: string }>(uid: string | null, nome: string) 
     // Cleanup sempre retornado (ARCHITECTURE.md §3) — evita listener herdado entre usuários.
     const cancelar = onSnapshot(ref, (snap) => {
       setItens(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as T));
+      aoCarregar?.();
     });
     return cancelar;
   }, [uid, nome]);
@@ -52,8 +53,17 @@ export function DadosProvider({ children }: { children: ReactNode }) {
   const { usuario } = useAuth();
   const uid = usuario?.uid ?? null;
 
-  const materias = useColecao<Materia>(uid, 'materias');
-  const blocos = useColecao<Bloco>(uid, 'blocos');
+  // materiasCarregou/blocosCarregou distinguem "0 itens porque a conta é nova"
+  // de "0 itens porque o 1º snapshot ainda não chegou" — sem isso a splash
+  // (app/index.tsx) travava pra sempre numa conta sem matéria nem bloco.
+  const [materiasCarregou, setMateriasCarregou] = useState(false);
+  const [blocosCarregou, setBlocosCarregou] = useState(false);
+  useEffect(() => {
+    if (!uid) { setMateriasCarregou(false); setBlocosCarregou(false); }
+  }, [uid]);
+
+  const materias = useColecao<Materia>(uid, 'materias', () => setMateriasCarregou(true));
+  const blocos = useColecao<Bloco>(uid, 'blocos', () => setBlocosCarregou(true));
   const rotinas = useColecao<Rotina>(uid, 'rotinas');
   const tarefas = useColecao<Tarefa>(uid, 'tarefas');
   const metas = useColecao<Meta>(uid, 'metas');
@@ -67,7 +77,7 @@ export function DadosProvider({ children }: { children: ReactNode }) {
     ).catch(() => {});
   }, [uid, materias, blocos, rotinas, tarefas, metas]);
 
-  const carregandoInicial = !!uid && materias.length === 0 && blocos.length === 0;
+  const carregandoInicial = !!uid && !(materiasCarregou && blocosCarregou);
 
   return (
     <DadosContext.Provider
