@@ -147,7 +147,9 @@ export default function Pomodoro() {
 
   if (fase === 'fechado') {
     return (
-      <View className={`absolute right-6 items-end gap-2 ${usaTabBar ? 'bottom-24' : 'bottom-7'}`}>
+      {/* bottom-40 no mobile: acima da barra de abas E do botão "+" de novo
+          bloco da tela Hoje (que fica em bottom-24, ver hoje/index.tsx). */}
+      <View className={`absolute right-6 items-end gap-2 ${usaTabBar ? 'bottom-40' : 'bottom-7'}`}>
         <View className="flex-row items-center gap-1.5 bg-surface border border-border rounded-pill px-2.5 h-8">
           <TextInput
             value={String(focoMin)}
