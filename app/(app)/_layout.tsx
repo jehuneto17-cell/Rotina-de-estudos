@@ -46,6 +46,18 @@ export default function AppLayout() {
           name="config/index"
           options={{ title: 'Config', tabBarIcon: ({ color, size }) => <Settings color={color} size={size} /> }}
         />
+        {/* Subtelas navegadas via router.push, não abas — Expo Router
+            registra toda rota do grupo como aba por padrão; href:null tira
+            da barra sem tirar da navegação. */}
+        <Tabs.Screen name="hoje/bloco/[id]" options={{ href: null }} />
+        <Tabs.Screen name="hoje/bloco/novo" options={{ href: null }} />
+        <Tabs.Screen name="diario/[id]" options={{ href: null }} />
+        <Tabs.Screen name="diario/novo" options={{ href: null }} />
+        <Tabs.Screen name="revisao/index" options={{ href: null }} />
+        <Tabs.Screen name="config/materias" options={{ href: null }} />
+        <Tabs.Screen name="config/compartilhar" options={{ href: null }} />
+        <Tabs.Screen name="config/convite/[id]" options={{ href: null }} />
+        <Tabs.Screen name="config/vinculo/[uid]" options={{ href: null }} />
       </Tabs>
       <Pomodoro />
     </View>
