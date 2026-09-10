@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react-native';
-import { Modal, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { Modal, Platform, Pressable, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 
@@ -48,6 +48,12 @@ function avisar() {
 // Ciclos automáticos foco→pausa→foco (ARCHITECTURE.md/PRODUCT-SPEC "ciclo do
 // Pomodoro"), com contador de pomodoros completos e aviso sonoro/tátil.
 export default function Pomodoro() {
+  // Mesmo corte de largura do (app)/_layout.tsx: abaixo de 768 no web (ou
+  // sempre no nativo) a barra de abas fica visível embaixo, então o widget
+  // precisa subir pra não ficar por cima dela.
+  const { width } = useWindowDimensions();
+  const usaTabBar = !(Platform.OS === 'web' && width >= 768);
+
   const [fase, setFase] = useState<Fase>('fechado');
   const [tipoFase, setTipoFase] = useState<FaseTipo>('foco');
   const [focoMin, setFocoMin] = useState(MIN_PADRAO.foco);
@@ -141,7 +147,7 @@ export default function Pomodoro() {
 
   if (fase === 'fechado') {
     return (
-      <View className="absolute bottom-7 right-6 items-end gap-2">
+      <View className={`absolute right-6 items-end gap-2 ${usaTabBar ? 'bottom-24' : 'bottom-7'}`}>
         <View className="flex-row items-center gap-1.5 bg-surface border border-border rounded-pill px-2.5 h-8">
           <TextInput
             value={String(focoMin)}
